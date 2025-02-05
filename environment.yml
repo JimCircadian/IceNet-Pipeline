@@ -10,7 +10,7 @@ dependencies:
   - ipykernel
   - netcdf4<1.6.1
   - openh264
-  - python=3.9
+  - python<3.12
   - pip
   - xarray
   - pip:
