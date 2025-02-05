@@ -25,9 +25,7 @@ issues with the solver not failing / logging clearly. [1]
 
 ### Using conda
 
-Conda can be used to manage system dependencies for HPC usage, we've tested on
-the BAS and JASMIN (NERC) HPCs. Obviously your dependencies for conda will 
-change based on what is in your system, so please treat this as illustrative. 
+Conda can be used to manage system dependencies for HPC usage, we've tested on the BAS and JASMIN (NERC) HPCs. Obviously your dependencies for conda will change based on what is in your system, so please treat this as illustrative. 
 
 ```bash
 cd pipeline
@@ -79,11 +77,11 @@ pip install -e src/icenet
 
 ##### Environmental Forecasting Development
 
-If you're keen to develop these tools as well, I suggest doing the following also:
+If you're keen to develop these tools as well, do the following also:
 
 ```bash
 mkdir src
-for TOOL in download-toolbox model-ensembler preprocess-toolbox; do
+for TOOL in preprocess-toolbox download-toolbox model-ensembler; do
   git clone https://github.com/icenet-ai/$TOOL src/$TOOL
   pip install -e src/$TOOL
 done
@@ -103,7 +101,7 @@ In my normal setup, I run several pipelines each with one source data store:
 ln -s ../data
 ```
 
-The following kind of illustrates this for linking big stuff to different storage:
+The following kind of illustrates this for linking big stuff to different storage on a platform where large storage is elsewhere in the filesystem:
 
 ```bash
 # An example from deployment on JASMIN
@@ -113,6 +111,31 @@ mkdir /gws/nopw/j04/icenet/processed
 ln -s /gws/nopw/j04/icenet/network_datasets
 ln -s /gws/nopw/j04/icenet/processed
 ```
+
+## Environments
+
+### Configuration
+
+This pipeline revolves around the ENVS file to provide the necessary configuration items. This can easily be derived from the `ENVS.example` file to a new file, then symbolically linked. Comments are available in `ENVS.example` to assist you with the editing process. 
+
+```bash
+cp ENVS.example ENVS.myconfig
+ln -sf ENVS.myconfig ENVS
+# Edit ENVS.myconfig to customise parameters for the pipeline
+```
+
+These variables will then be picked up during the runs via the ENVS symlink.
+## Implementing and using multiple environments
+
+__Environments depend on a ENVS configuration that will then live with the pipeline for operational use. If you need to configure a new ENVS, you probably need a new pipeline folder for it!__
+
+The point of having a repository like this is to facilitate easy integration with workflow managers, as well as allow multiple pipelines to easily be co-located in the filesystem. 
+
+TODO: explain `scripts/create_pipeline_run_dir.sh`
+
+`pipeline` is now your authoritative clone / base and all other environments will only contain their run assets!
+
+
 
 ## Example run of the pipeline
 
@@ -126,20 +149,7 @@ HPC with the setup passed on the command line rather than in hardcoded headers.
 If you're not using SLURM, just run the commands without sbatch. To use an 
 alternative just amend sbatch to whatever you need. 
 
-### Configuration
 
-This pipeline revolves around the ENVS file to provide the necessary 
-configuration items. This can easily be derived from the `ENVS.example` file 
-to a new file, then symbolically linked. Comments are available in 
-`ENVS.example` to assist you with the editing process. 
-
-```bash
-cp ENVS.example ENVS.myconfig
-ln -sf ENVS.myconfig ENVS
-# Edit ENVS.myconfig to customise parameters for the pipeline
-```
-
-These variables will then be picked up during the runs via the ENVS symlink.
 
 ### Running the training pipeline 
 
@@ -191,6 +201,16 @@ ln -s /data/hpcdata/users/jambyr/icenet/blue/results/networks/dh23 results/netwo
 ```
 
 [And now you can look at running prediction commands against somebody elses networks][4]
+
+
+
+
+
+
+
+
+
+
 
 <!--
 #### One off: preparing SIC masks
@@ -260,54 +280,9 @@ export DEMO_TEST_END="$DEMO_TEST_START"
 icenet_upload_azure -v -o results/predict/demo_test.nc $DEMO_TEST_START
 ```
 
-## Implementing and changing environments
 
-The point of having a repository like this is to facilitate easy integration 
-with workflow managers, as well as allow multiple pipelines to easily be 
-co-located in the filesystem. To achieve this have a location that contains 
-your environments and sources, for example: 
 
-```
-cd hpc/icenet
-ls -d1 *
-blue
-data
-green
-pipeline
-scratch
-test
 
-# pipeline -> green
-
-# Optionally you might have local sources for installs (e.g. not pip installed)
-icenet.blue    
-icenet.green    
-```
-
-Change the location of the pipeline from green to blue
-
-```bash
-TARGET=blue
-
-ln -sfn $TARGET pipeline
-
-# If using a branch, go into icenet.blue and pull / checkout as required, e.g.
-cd icenet.blue
-git pull
-git checkout my-feature-branch
-cd ..
-
-# Next update the conda environment, which will be specific to your local disk
-ln -sfn $HOME/hpc/miniconda3/envs/icenet-$TARGET $HOME/hpc/miniconda3/envs/icenet
-cd pipeline
-git pull
-
-# Update the environment
-conda env update -n icenet -f environment.yml
-conda activate icenet
-pip install --upgrade -r requirements-pip.txt
-pip install -e ../icenet.$TARGET
-```
 -->
 
 ## Credits

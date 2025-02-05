@@ -4,6 +4,7 @@ __pycache__/
 /_sicfile/
 /backups/
 /cf/
+/configurations
 /dask-worker-space/
 /data
 /*test*/
@@ -14,6 +15,7 @@ __pycache__/
 /network_datasets
 /notebooks/
 /results/
+/paper/
 /plot/
 /processed
 /scratch/
@@ -40,4 +42,3 @@ ENVS.*
 
 ### Prevent source directories from being included!
 /src/
-/configurations/
