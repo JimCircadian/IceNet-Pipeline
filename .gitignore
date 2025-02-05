@@ -40,3 +40,4 @@ ENVS.*
 
 ### Prevent source directories from being included!
 /src/
+/configurations/
