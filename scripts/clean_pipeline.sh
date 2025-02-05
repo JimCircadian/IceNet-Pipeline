@@ -11,7 +11,7 @@ else
     mkdir -p $BACKUPDIR
 fi
 
-for BACK_FILE in $( ls dataset_config.*.json loader.*.json 2>/dev/null ); do
+for BACK_FILE in $( ls dataset_config.*.json loader.*.json processed*.json 2>/dev/null ); do
     mv -v $BACK_FILE $BACKUPDIR
 done
 
@@ -28,7 +28,7 @@ done
 mkdir -p $BACKUPDIR/plot/
 mv plot/* $BACKUPDIR/plot/
 
-for NORM_PARAMS in $( find processed/ -name 'normalisation.scale' -o -name 'params' -print ); do
+for NORM_PARAMS in $( find processed*/ -name 'normalisation.scale' -o -name 'params' -print ); do
     PROC_PATH=`dirname $NORMED_FILES`
 
     mkdir -p $BACKUPDIR/$PROC_PATH
@@ -39,6 +39,6 @@ rm -v tmp.*.{predict,train}
 rm -rv logs/*
 rm -rv network_datasets/*
 rm -v *.{csv,log}
-rm -rv processed/*
+rm -rv processed*/*
 rm -rv _sicfile/
 rm -rv wandb/

@@ -58,22 +58,35 @@ Bear in mind when installing `icenet` (and by dependency `tensorflow`) you
 will need to be on a CUDA/GPU enabled machine for binary linkage. As per 
 current (end of 2022) `tensorflow` guidance do not install it via conda. 
 
+#### PyPI installation - preferred
+
+__If you don't want to develop locally, you can install via PyPI...__
+
+```bash
+pip install icenet
+```
+
 #### Developer installation
 
 Using `-e` is optional, based on whether you want to be able to hack at the 
 source!
 
 ```bash
-cd ../icenet   # or wherever you've cloned icenet
-pip install -e . 
+mkdir src
+git clone https://github.com/icenet-ai/icenet src/icenet
+pip install -e src/icenet 
 ```
 
-#### PyPI installation
+##### Environmental Forecasting Development
 
-__If you don't want the source locally, you can now install via PyPI...__
+If you're keen to develop these tools as well, I suggest doing the following also:
 
 ```bash
-pip install icenet
+mkdir src
+for TOOL in download-toolbox model-ensembler preprocess-toolbox; do
+  git clone https://github.com/icenet-ai/$TOOL src/$TOOL
+  pip install -e src/$TOOL
+done
 ```
 
 ### Linking data folders
@@ -179,6 +192,7 @@ ln -s /data/hpcdata/users/jambyr/icenet/blue/results/networks/dh23 results/netwo
 
 [And now you can look at running prediction commands against somebody elses networks][4]
 
+<!--
 #### One off: preparing SIC masks
 
 As an additional dataset, IceNet relies on some masks being pre-prepared, so you
@@ -294,12 +308,13 @@ conda activate icenet
 pip install --upgrade -r requirements-pip.txt
 pip install -e ../icenet.$TARGET
 ```
+-->
 
 ## Credits
 
-* Tom Andersson - Lead researcher
-* James Byrne - Research Software Engineer
-* Scott Hosking - PI
+<a href="https://github.com/icenet-ai/icenet-pipeline/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=icenet-ai/icenet-pipeline" />
+</a>
 
 ## License
 
