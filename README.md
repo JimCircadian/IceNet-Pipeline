@@ -14,8 +14,7 @@ The structure of this repository is to provide CLI commands that allow you to
 you want to get a particular tag add `--branch vM.M.R` to the clone command.**
 
 ```bash
-git clone git@github.com:icenet-ai/icenet-pipeline.git green
-ln -s green pipeline
+git clone git@github.com:icenet-ai/icenet-pipeline.git pipeline
 ```
 
 ## Creating the environment
@@ -101,7 +100,7 @@ In my normal setup, I run several pipelines each with one source data store:
 ln -s ../data
 ```
 
-The following kind of illustrates this for linking big stuff to different storage on a platform where large storage is elsewhere in the filesystem:
+The following kind of illustrates this for linking big stuff to different storage on a platform where large and/or performant storage is elsewhere in the filesystem (in this case `/gws/nopw/j04`):
 
 ```bash
 # An example from deployment on JASMIN
@@ -114,18 +113,7 @@ ln -s /gws/nopw/j04/icenet/processed
 
 ## Environments
 
-### Configuration
-
-This pipeline revolves around the ENVS file to provide the necessary configuration items. This can easily be derived from the `ENVS.example` file to a new file, then symbolically linked. Comments are available in `ENVS.example` to assist you with the editing process. 
-
-```bash
-cp ENVS.example ENVS.myconfig
-ln -sf ENVS.myconfig ENVS
-# Edit ENVS.myconfig to customise parameters for the pipeline
-```
-
-These variables will then be picked up during the runs via the ENVS symlink.
-## Implementing and using multiple environments
+### Implementing and using multiple environments
 
 __Environments depend on a ENVS configuration that will then live with the pipeline for operational use. If you need to configure a new ENVS, you probably need a new pipeline folder for it!__
 
@@ -135,6 +123,17 @@ TODO: explain `scripts/create_pipeline_run_dir.sh`
 
 `pipeline` is now your authoritative clone / base and all other environments will only contain their run assets!
 
+### Configuration
+
+Each pipeline revolves around the ENVS file to provide the necessary configuration items. This can easily be derived from the `ENVS.example` file to a new file, then symbolically linked. Comments are available in `ENVS.example` to assist you with the editing process. For each of the pipeline directories you've created (or just the `pipeline` directory if you've not implemented multiple environments above), configure an individual ENVS file. 
+
+```bash
+cp ENVS.example ENVS.myconfig
+ln -sf ENVS.myconfig ENVS
+# Edit ENVS.myconfig to customise parameters for the pipeline
+```
+
+These variables will then be picked up during the runs via the ENVS symlink.
 
 
 ## Example run of the pipeline
