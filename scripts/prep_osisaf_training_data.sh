@@ -17,10 +17,8 @@ DOWNLOAD=${2:-0}
 # download-toolbox integration
 # This updates our source
 if [ $DOWNLOAD -eq 1 ]; then
-  # download_amsr2 $DATA_ARGS $HEMI $AMSR2_DATES $AMSR2_VAR_ARGS
   download_osisaf $DATA_ARGS $HEMI $OSISAF_DATES $OSISAF_VAR_ARGS
   download_era5 $DATA_ARGS $HEMI $ERA5_DATES $ERA5_VAR_ARGS
-  # download_cmip --source MRI-ESM2-0 --member r1i1p1f1 $DATA_ARGS $HEMI $CMIP6_DATES $CMIP6_VAR_ARGS
 fi 2>&1 | tee logs/download.training.log
 
 DATASET_CONFIG_NAME="dataset_config.${DATA_FREQUENCY}.hemi.${HEMI}.json"

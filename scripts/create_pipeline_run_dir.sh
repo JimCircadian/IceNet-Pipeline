@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ENV_NAME="$1"
-DIR="pipeline.$ENV_NAME"
+DIR="$ENV_NAME"
 
 if [ ! -d ./pipeline ] && [ ! -d ./pipeline/.git ]; then
   echo "This is a simple script, run it with a clone of icenet-pipeline in the current dir"
@@ -17,7 +17,7 @@ for COMMON_DIR in configurations data scripts src; do
 done
 
 # Link to the ensemble templates
-mkdir $DIR/ensemble
+mkdir $DIR/{ensemble,logs}
 for ENS_TMPL in predict.tmpl.yaml template train.tmpl.yaml; do
   ln -s `realpath pipeline/ensemble/$ENS_TMPL` $DIR/ensemble/
 done
