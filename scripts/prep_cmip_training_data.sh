@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash -l
+#!/usr/bin/bash -l
 
 source ENVS
 conda activate $ICENET_CONDA
