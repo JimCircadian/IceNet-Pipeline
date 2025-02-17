@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/usr/bin/env bash -l
 
 source ENVS
 conda activate $ICENET_CONDA
@@ -19,7 +19,7 @@ DOWNLOAD=${2:-0}
 if [ $DOWNLOAD -eq 1 ]; then
   download_amsr2 $DATA_ARGS $HEMI $AMSR2_DATES $AMSR2_VAR_ARGS
   download_era5 $DATA_ARGS $HEMI $ERA5_DATES $ERA5_VAR_ARGS
-fi 2>&1 | tee logs/download.training.log
+fi 2>&1 | tee logs/download.amsr_training.log
 
 DATASET_CONFIG_NAME="dataset_config.${DATA_FREQUENCY}.hemi.${HEMI}.json"
 
