@@ -14,7 +14,7 @@ ENSEMBLE_TARGET="slurm"
 ENSEMBLE_SWITCH=""
 ENSEMBLE_ARGS=""
 ENSEMBLE_JOBS=1
-ENSEMBLE_SEEDS_DEFAULT=42,46,45,17,24,84,83,16,5,3
+ENSEMBLE_SEEDS_DEFAULT=42,46,45
 
 while getopts ":b:c:de:f:g:j:l:m:n:o:p:q:r:s:t:x:" opt; do
   case "$opt" in
