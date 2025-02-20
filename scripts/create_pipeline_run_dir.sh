@@ -17,7 +17,7 @@ for COMMON_DIR in configurations data scripts src; do
 done
 
 # Link to the ensemble templates
-mkdir $DIR/{ensemble,logs}
+mkdir $DIR/{ensemble,logs,plots}
 for ENS_TMPL in predict.tmpl.yaml template train.tmpl.yaml; do
   ln -s `realpath pipeline/ensemble/$ENS_TMPL` $DIR/ensemble/
 done
