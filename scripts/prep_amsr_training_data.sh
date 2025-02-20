@@ -1,4 +1,4 @@
-#!/usr/bin/env bash -l
+#!/usr/bin/bash -l
 
 source ENVS
 conda activate $ICENET_CONDA
@@ -14,72 +14,69 @@ fi
 HEMI="$1"
 DOWNLOAD=${2:-0}
 
+CONFIG_SUFFIX="${DATA_FREQUENCY}.${HEMI}.json"
+AMSR2_DATA="data.amsr2"
+AMSR2_PROC="proc.amsr2"
+ERA5_DATA="data.era5"
+ERA5_PROC="proc.era5"
+
 # download-toolbox integration
 # This updates our source
 if [ $DOWNLOAD -eq 1 ]; then
-  download_amsr2 $DATA_ARGS $HEMI $AMSR2_DATES $AMSR2_VAR_ARGS
-  download_era5 $DATA_ARGS $HEMI $ERA5_DATES $ERA5_VAR_ARGS
+  # We use --config-path to localise the generation of config to the pipeline rather than the dataset
+  download_amsr2 --config-path ${AMSR2_DATA}.${CONFIG_SUFFIX} $DATA_ARGS $HEMI $AMSR2_DATES $AMSR2_VAR_ARGS
+  download_era5 --config-path ${ERA5_DATA}.${CONFIG_SUFFIX} $DATA_ARGS $HEMI $ERA5_DATES $ERA5_VAR_ARGS
 fi 2>&1 | tee logs/download.amsr_training.log
-
-DATASET_CONFIG_NAME="dataset_config.${DATA_FREQUENCY}.hemi.${HEMI}.json"
-
-# preprocess-toolbox integration
-# Persistent datasets from the source data store, wherever that is
-AMSR2_DATASET="${SOURCE_DATA_STORE}/amsr2_6250/${DATASET_CONFIG_NAME}"
-ERA5_DATASET="${SOURCE_DATA_STORE}/era5/${DATASET_CONFIG_NAME}"
-
-# Create links to the central data store datasets for easier "mapping"
-[ ! -e data/amsr2_6250 ] && [ -d ${SOURCE_DATA_STORE}/amsr2_6250 ] && ln -s ${SOURCE_DATA_STORE}/amsr2_6250 ./data/amsr2_6250
-[ ! -e data/era5 ] && [ -d ${SOURCE_DATA_STORE}/era5 ] && ln -s ${SOURCE_DATA_STORE}/era5 ./data/era5
-
-PROCESSED_DATASET="${TRAIN_DATA_NAME}.${HEMI}"
-LOADER_CONFIGURATION="loader.${PROCESSED_DATASET}.json"
-DATASET_NAME="tfamsr_${HEMI}"
-
-ATMOS_PROC="era5_amsr.$TRAIN_DATA_NAME"
-ATMOS_PROC_DSC="${PROCESSED_DATA_STORE}/${ATMOS_PROC}/${DATASET_CONFIG_NAME}"
-GROUND_TRUTH_SIC="amsr_sic.$TRAIN_DATA_NAME"
-GROUND_TRUTH_SIC_DSC="${PROCESSED_DATA_STORE}/${GROUND_TRUTH_SIC}/${DATASET_CONFIG_NAME}"
 
 ##
 # AMSR2 ground truth with ERA5
 #
 
-preprocess_loader_init -v $PROCESSED_DATASET
-preprocess_add_mask -v $LOADER_CONFIGURATION $AMSR2_DATASET land "icenet.data.masks.nsidc:Masks"
+PROCESSED_DATASET="${TRAIN_DATA_NAME}.${DATA_FREQUENCY}.${HEMI}"
 
-preprocess_missing_time -n siconca -v $AMSR2_DATASET $GROUND_TRUTH_SIC
+preprocess_loader_init -v $PROCESSED_DATASET
+preprocess_add_mask -v $PROCESSED_DATASET $AMSR2_DATA.$CONFIG_SUFFIX land "icenet.data.masks.nsidc:Masks"
+
+# IS THIS NEEDED? icenet_generate_ref_amsr -v ${PROCESSED_DATA_STORE}/masks/ice_conc_${HEMI_SHORT}_ease2-250_cdr-v2p0_200001021200.nc
+[ ! -f ref.amsr.${HEMI}.nc ] && ln -s $( realpath $( ls data/amsr2_6250/siconca/*/*${HEMI:0:1}6250-*-v5.4.nc | head -n 1 ) ) ref.amsr.${HEMI}.nc
+
+# Creates a new version of the dataset - processed_data/
+preprocess_missing_time \
+  -c ./interp.amsr2.$CONFIG_SUFFIX \
+  -n siconca -v $AMSR2_DATA.$CONFIG_SUFFIX $AMSR2_PROC
 
 preprocess_dataset $PROC_ARGS_SIC -v \
   -ps "train" -sn "train,val,test" -ss "$TRAIN_START,$VAL_START,$TEST_START" -se "$TRAIN_END,$VAL_END,$TEST_END" \
   -i "icenet.data.processors.amsr:AMSR2PreProcessor" \
   -sh $LAG -st $FORECAST_LENGTH \
-  $AMSR2_DATASET ${PROCESSED_DATASET}_amsr
+  interp.amsr2.$CONFIG_SUFFIX ${PROCESSED_DATASET}_amsr
 
-# IS THIS NEEDED? icenet_generate_ref_amsr -v ${PROCESSED_DATA_STORE}/masks/ice_conc_${HEMI_SHORT}_ease2-250_cdr-v2p0_200001021200.nc
-[ ! -f ref.amsr.${HEMI}.nc ] && ln -s data/amsr2_6250/siconca/2014/asi-AMSR2-s6250-20140630-v5.4.nc ref.amsr.${HEMI}.nc
-
-preprocess_regrid -v \
+# Creates a new version of the dataset - processed_data/
+preprocess_regrid -v -c ./regrid.era5.$CONFIG_SUFFIX \
   -ps "train" -sn "train,val,test" -ss "$TRAIN_START,$VAL_START,$TEST_START" -se "$TRAIN_END,$VAL_END,$TEST_END" \
-  $ERA5_DATASET ref.amsr.${HEMI}.nc $ATMOS_PROC
+  $ERA5_DATA.$CONFIG_SUFFIX ref.amsr.${HEMI}.nc $ERA5_PROC
 
 preprocess_dataset $PROC_ARGS_ERA5 -v \
   -ps "train" -sn "train,val,test" -ss "$TRAIN_START,$VAL_START,$TEST_START" -se "$TRAIN_END,$VAL_END,$TEST_END" \
   -i "icenet.data.processors.cds:ERA5PreProcessor" \
   -sh $LAG -st $FORECAST_LENGTH \
-  $ATMOS_PROC_DSC ${PROCESSED_DATASET}_era5
+  regrid.era5.$CONFIG_SUFFIX ${PROCESSED_DATASET}_era5
 
-preprocess_add_processed -v $LOADER_CONFIGURATION processed.${PROCESSED_DATASET}_amsr.json processed.${PROCESSED_DATASET}_era5.json
+preprocess_add_processed -v $PROCESSED_DATASET processed.${PROCESSED_DATASET}_amsr.json processed.${PROCESSED_DATASET}_era5.json
 
-preprocess_add_channel -v $LOADER_CONFIGURATION $GROUND_TRUTH_SIC_DSC sin "icenet.data.meta:SinProcessor"
-preprocess_add_channel -v $LOADER_CONFIGURATION $GROUND_TRUTH_SIC_DSC cos "icenet.data.meta:CosProcessor"
-preprocess_add_channel -v $LOADER_CONFIGURATION $GROUND_TRUTH_SIC_DSC land_map "icenet.data.masks.nsidc:Masks"
+preprocess_add_channel -v $PROCESSED_DATASET interp.amsr2.$CONFIG_SUFFIX sin "icenet.data.meta:SinProcessor"
+preprocess_add_channel -v $PROCESSED_DATASET interp.amsr2.$CONFIG_SUFFIX cos "icenet.data.meta:CosProcessor"
+preprocess_add_channel -v $PROCESSED_DATASET interp.amsr2.$CONFIG_SUFFIX land_map "icenet.data.masks.nsidc:Masks"
+
+LOADER_CONFIGURATION="loader.${PROCESSED_DATASET}.json"
+DATASET_NAME="tfamsr_${HEMI}"
 
 icenet_dataset_create -v -c -p -ob $BATCH_SIZE -w $WORKERS -fl $FORECAST_LENGTH $LOADER_CONFIGURATION $DATASET_NAME
 
 FIRST_DATE=${PLOT_DATE:-`cat ${LOADER_CONFIGURATION} | jq '.sources[.sources|keys[0]].splits.train[0]' | tr -d '"'`}
-icenet_plot_input -p -v dataset_config.${DATASET_NAME}.json $FIRST_DATE ./plot/input.${HEMI}.${FIRST_DATE}.png
-icenet_plot_input --outputs -v dataset_config.${DATASET_NAME}.json $FIRST_DATE ./plot/outputs.${HEMI}.${FIRST_DATE}.png
-icenet_plot_input --weights -v dataset_config.${DATASET_NAME}.json $FIRST_DATE ./plot/weights.${HEMI}.${FIRST_DATE}.png
+mkdir -p plot
+icenet_plot_input -p -v dataset_config.${DATASET_NAME}.json $FIRST_DATE ./plots/input.${HEMI}.${FIRST_DATE}.png
+icenet_plot_input --outputs -v dataset_config.${DATASET_NAME}.json $FIRST_DATE ./plots/outputs.${HEMI}.${FIRST_DATE}.png
+icenet_plot_input --weights -v dataset_config.${DATASET_NAME}.json $FIRST_DATE ./plots/weights.${HEMI}.${FIRST_DATE}.png
 
 icenet_dataset_create -v -p -ob $BATCH_SIZE -w $WORKERS -fl $FORECAST_LENGTH $LOADER_CONFIGURATION $DATASET_NAME
