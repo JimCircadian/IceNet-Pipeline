@@ -1,3 +1,5 @@
+#!/usr/bin/bash -l
+
 HEMI="$1"
 DOWNLOAD=${2:-0}
 
@@ -38,9 +40,8 @@ ATMOS_PROC_DIR="processed/${ATMOS_PROC}"
 GROUND_TRUTH_SIC="${TRAIN_DATA_NAME}.${HEMI}_amsr"
 GROUND_TRUTH_SIC_DIR="processed/${GROUND_TRUTH_SIC}"
 
-
 preprocess_loader_init -v $FORECAST_DATASET
-preprocess_add_mask -v $LOADER_CONFIGURATION $AMSR2_DATASET land "icenet.data.masks.nsidc:Masks"
+preprocess_add_mask -v $FORECAST_DATASET $AMSR2_DATASET land "icenet.data.masks.nsidc:Masks"
 
 preprocess_dataset $PROC_ARGS_SIC -v \
   -r $GROUND_TRUTH_SIC_DIR \
@@ -60,14 +61,14 @@ preprocess_dataset $PROC_ARGS_ERA5 -v \
   -sh $LAG \
   ${PROCESSED_DATA_STORE}/${FORECAST_NAME}_era5/${SOURCE_CONFIG_NAME} ${FORECAST_NAME}_era5
 
-preprocess_add_processed -v $LOADER_CONFIGURATION processed.${FORECAST_NAME}_amsr.json processed.${FORECAST_NAME}_era5.json
+preprocess_add_processed -v $FORECAST_DATASET processed.${FORECAST_NAME}_amsr.json processed.${FORECAST_NAME}_era5.json
 
-preprocess_add_channel -v $LOADER_CONFIGURATION $AMSR2_DATASET sin "icenet.data.meta:SinProcessor"
-preprocess_add_channel -v $LOADER_CONFIGURATION $AMSR2_DATASET cos "icenet.data.meta:CosProcessor"
-preprocess_add_channel -v $LOADER_CONFIGURATION $AMSR2_DATASET land_map "icenet.data.masks.nsidc:Masks"
+preprocess_add_channel -v $FORECAST_DATASET $AMSR2_DATASET sin "icenet.data.meta:SinProcessor"
+preprocess_add_channel -v $FORECAST_DATASET $AMSR2_DATASET cos "icenet.data.meta:CosProcessor"
+preprocess_add_channel -v $FORECAST_DATASET $AMSR2_DATASET land_map "icenet.data.masks.nsidc:Masks"
 
 icenet_dataset_create -v -c -p -ob $BATCH_SIZE -w $WORKERS -fl $FORECAST_LENGTH $LOADER_CONFIGURATION $FORECAST_DATASET
 
 FIRST_DATE=${PLOT_DATE:-`cat ${LOADER_CONFIGURATION} | jq '.sources[.sources|keys[0]].splits.prediction[0]' | tr -d '"'`}
-icenet_plot_input -p -v dataset_config.${FORECAST_DATASET}.json $FIRST_DATE ./plot/input.${HEMI}.${FIRST_DATE}.png
+icenet_plot_input -p -v dataset_config.${FORECAST_DATASET}.json $FIRST_DATE ./plots/input.${HEMI}.${FIRST_DATE}.png
 
