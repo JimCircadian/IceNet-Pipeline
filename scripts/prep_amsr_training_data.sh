@@ -35,9 +35,13 @@ preprocess_missing_time \
   -c ./interp.amsr2.$CONFIG_SUFFIX \
   -n siconca -v $AMSR2_DATA.$CONFIG_SUFFIX $AMSR2_PROC
 
-# Creates a new version of the dataset - processed_data/
+# Creates a new version of the dataset - processed_data/ so include any lag
+# The resulting configuration doesn't care about splits, so it won't carry forward
+REGRID_TRAIN_START=`date --date="$TRAIN_START - $LAG $DATA_FREQUENCY" +%F`
+REGRID_VAL_START=`date --date="$VAL_START - $LAG $DATA_FREQUENCY" +%F`
+REGRID_TEST_START=`date --date="$TEST_START - $LAG $DATA_FREQUENCY" +%F`
 preprocess_regrid -v -c ./regrid.era5.$CONFIG_SUFFIX \
-  -ps "train" -sn "train,val,test" -ss "$TRAIN_START,$VAL_START,$TEST_START" -se "$TRAIN_END,$VAL_END,$TEST_END" \
+  -ps "train" -sn "train,val,test" -ss "$REGRID_TRAIN_START,$REGRID_VAL_START,$REGRID_TEST_START" -se "$TRAIN_END,$VAL_END,$TEST_END" \
   $ERA5_DATA.$CONFIG_SUFFIX ref.amsr.${HEMI}.nc $ERA5_PROC
 
 ##

@@ -62,9 +62,13 @@ HEMI_SHORT="nh"
 
 icenet_generate_ref_osisaf -v data/masks.osisaf/ice_conc_${HEMI_SHORT}_ease2-250_cdr-v2p0_200001021200.nc
 
-# Creates a new version of the dataset - processed_data/
+# Creates a new version of the dataset - processed_data/ so include any lag
+# The resulting configuration doesn't care about splits, so it won't carry forward
+REGRID_TRAIN_START=`date --date="$TRAIN_START - $LAG $DATA_FREQUENCY" +%F`
+REGRID_VAL_START=`date --date="$VAL_START - $LAG $DATA_FREQUENCY" +%F`
+REGRID_TEST_START=`date --date="$TEST_START - $LAG $DATA_FREQUENCY" +%F`
 preprocess_regrid -v -c ./regrid.era5.$CONFIG_SUFFIX \
-  -ps "train" -sn "train,val,test" -ss "$TRAIN_START,$VAL_START,$TEST_START" -se "$TRAIN_END,$VAL_END,$TEST_END" \
+  -ps "train" -sn "train,val,test" -ss "$REGRID_TRAIN_START,$REGRID_VAL_START,$REGRID_TEST_START" -se "$TRAIN_END,$VAL_END,$TEST_END" \
   $ERA5_DATA.$CONFIG_SUFFIX ref.osisaf.${HEMI}.nc $ERA5_PROC
 preprocess_rotate -n uas,vas -v regrid.era5.$CONFIG_SUFFIX ref.osisaf.${HEMI}.nc
 
